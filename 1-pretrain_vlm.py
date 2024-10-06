@@ -51,6 +51,10 @@ def get_lr(it, all):
 def train_epoch(epoch, wandb):
     start_time = time.time()
     for step, (X, Y, loss_mask, image_process) in enumerate(train_loader):
+        ### 为了训练速度，只取前（args.save_interval+2）个step
+        if step > args.save_interval+2:
+            break
+
         X = X.to(args.device)
         Y = Y.to(args.device)
         loss_mask = loss_mask.to(args.device)
@@ -161,7 +165,8 @@ def init_distributed_mode():
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="MiniMind-V Pretrain")
     parser.add_argument("--out_dir", type=str, default="out", help="Output directory")
-    parser.add_argument("--epochs", type=int, default=19, help="Number of epochs")
+    ### 为了训练速度，把epochs 从19降低为1 
+    parser.add_argument("--epochs", type=int, default=1, help="Number of epochs")
     parser.add_argument("--batch_size", type=int, default=128, help="Batch size")
     parser.add_argument("--learning_rate", type=float, default=4e-4, help="Learning rate")
     parser.add_argument("--device", type=str, default="cuda:0" if torch.cuda.is_available() else "cpu",
@@ -176,8 +181,12 @@ if __name__ == "__main__":
     parser.add_argument("--accumulation_steps", type=int, default=1, help="Gradient accumulation steps")
     parser.add_argument("--grad_clip", type=float, default=1.0, help="Gradient clipping threshold")
     parser.add_argument("--warmup_iters", type=int, default=0, help="Number of warmup iterations")
-    parser.add_argument("--log_interval", type=int, default=100, help="Logging interval")
-    parser.add_argument("--save_interval", type=int, default=100, help="Model saving interval")
+    # parser.add_argument("--log_interval", type=int, default=100, help="Logging interval")
+    # parser.add_argument("--save_interval", type=int, default=100, help="Model saving interval")
+
+    ### 为了训练速度，把 log_interval 从100降低为10把save_interval 从100降低为50
+    parser.add_argument("--log_interval", type=int, default=10, help="Logging interval")
+    parser.add_argument("--save_interval", type=int, default=50, help="Model saving interval")
     parser.add_argument('--local_rank', type=int, default=-1, help='local rank for distributed training')
 
     args = parser.parse_args()

@@ -380,16 +380,29 @@ class Transformer(PreTrainedModel):
             ] or None
 
         image_indices = find_indices(tokens, self.image_ids)
+        # print(f"len(image_indices): {len(image_indices)}")##batch_size=128
+        # print(f"image_indices: {image_indices}")
 
         # 如果此时有图像编码
         if image_encoders is not None:
+            # print(f"image_encoders.shape: {image_encoders.shape}")##[batch_size,seq_len=50,768]
             vision_proj = self.vision_proj(image_encoders)
+            # print(f"vision_proj.shape: {vision_proj.shape}")##[batch_size,seq_len=50,512]
             if image_indices is not None:
                 # 创建一个新的张量来存储拼接后的结果
                 new_h = []
-                for i in range(h.size(0)):
+                for i in range(h.size(0)):##h.size(0)=batch_size
+                    # print(f"h.shape: {h.shape}")##[batch_size,seq_len=199(max_seq_len-1),512]
+                    # print(f"image_indices[i][0]: {image_indices[i][0]}")##14
+                    # print(f"image_indices[i][1]: {image_indices[i][1]}")##63
+                    # print(f"len(image_indices[i]): {len(image_indices[i])}")##=2
+
+                    
                     before = h[i, :image_indices[i][0], :]
                     after = h[i, image_indices[i][1] + 1:, :]
+                    print(f"before.shape: {before.shape}")##[14,512]
+                    print(f"vision_proj[i].shape: {vision_proj[i].shape}")##[50,512]
+                    print(f"after.shape: {after.shape}")##[135,512]
                     # 拼接 before, vision_proj, after
                     new_h_i = torch.cat((before, vision_proj[i], after), dim=0)[:seqlen]
                     new_h.append(new_h_i)
@@ -410,6 +423,8 @@ class Transformer(PreTrainedModel):
             current_idx = int(keyargs['current_idx'])
 
         _bsz, seqlen = tokens.shape
+        # print(f"tokens.shape: {tokens.shape}")##[batch_size, max_seq_len-1]
+        # print(f"targets.shape: {targets.shape}")##[batch_size, max_seq_len-1]
         # language proj token
         h = self.tok_embeddings(tokens)
         h = self.dropout(h)

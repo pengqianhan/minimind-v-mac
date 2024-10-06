@@ -60,8 +60,12 @@ class PretrainDataset(Dataset):
         for i in range(0, len(conversation), 2):
             # 检查是否有配对的问题和回答
             if i + 1 < len(conversation):
+                
                 q = conversation[i]['value'].replace('<image>', self.image_special_token)
                 a = conversation[i + 1]['value']
+                # print(f'qqqqqqqq: {q}')
+                # print(f'aaaaaaaa: {a}')
+
 
                 if q and a:
                     messages.append({"role": "user", "content": q})
